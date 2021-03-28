@@ -1,0 +1,98 @@
+
+service: auction-service
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  memorySize: 256
+  region: eu-west-2
+  iam:
+    role:
+      statements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:PutItem
+          - dynamodb:Scan
+          - dynamodb:GetItem
+          - dynamodb:UpdateItem
+          - dynamodb:Query
+        Resource:
+        - arn:aws:dynamodb:eu-west-2:676179010844:table/AuctionsTable
+        - Fn::Join:
+            - '/'
+            - -  'arn:aws:dynamodb:eu-west-2:676179010844:table/AuctionsTable'
+              - 'index'
+              - 'statusAndEndingAt'
+
+functions:
+  createAuction:
+    handler: src/handlers/createAuction.handler
+    events:
+      - http:
+          path: /auctions
+          method: POST
+          cors: true # configure cors on endpoint
+          authorizer: ${self:custom.authorizer} # specify authorization midddlware lambda function - using Function Arn
+  getAuctions:
+    handler: src/handlers/getAuctions.handler
+    events:
+      - http:
+          path: /auctions
+          method: GET
+          cors: true # configure cors on endpoint
+          authorizer: ${self:custom.authorizer} # specify authorization midddlware lambda function - using Function Arn
+  getAuction:
+    handler: src/handlers/getAuction.handler
+    events:
+      - http:
+          path: /auctions/{id}
+          method: GET
+          cors: true # configure cors on endpoint
+          authorizer: ${self:custom.authorizer} # specify authorization midddlware lambda function - using Function Arn
+  placeBid:
+    handler: src/handlers/placeBid.handler
+    events:
+      - http:
+          path: /auctions/{id}/bid
+          method: PATCH
+          cors: true # configure cors on endpoint
+          authorizer: ${self:custom.authorizer} # specify authorization midddlware lambda function - using Function Arn
+  processAuctions:
+    handler: src/handlers/processAuctions.handler
+    events:
+      # - schedule: rate(1 minute)
+
+resources:
+  Resources:
+    AuctionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: AuctionsTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: endingAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: statusAndEndingAt
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+              - AttributeName: endingAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+custom:
+  authorizer: arn:aws:lambda:eu-west-2:676179010844:function:auth-service-dev-auth
+  AuctionsBucket: 
+    name: auctions-bucket-gh576j-${self:provider.stage} # Ensure that bucket name is all lowercase

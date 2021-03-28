@@ -1,0 +1,39 @@
+
+service: notification-service
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  memorySize: 256
+  region: eu-west-2
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role:
+      statements: 
+        - ${file(iam/SendMailIAM.yml):SendMailIAM}
+        - ${file(iam/MailQueueIAM.yml):MailQueueIAM}
+        # - Effect: "Allow"
+        #   Action:
+        #     - ses:SendEmail
+        #     - ses:SendRawEmail
+        #   Resource: arn:aws:ses:*
+
+resources:
+  Resources:
+    MailQueue: ${file(resources/MailQueue.yml):MailQueue}
+
+functions:
+  sendMail:
+    handler: src/handlers/sendMail.handler
+    events:
+      - sqs:
+          arn: ${self:custom.mailQueue.arn}
+          batchSize: 1 # Default batchSize is 10
+
+custom:
+  mailQueue:
+    name: MailQueue-${self:provider.stage}
+    arn: { 'Fn::GetAtt': ['MailQueue', 'Arn'] }

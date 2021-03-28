@@ -1,0 +1,12 @@
+AuctionsTable:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: AuctionsTable
+
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+    KeySchema:
+      - AttributeName: id
+        KeyType: HASH
