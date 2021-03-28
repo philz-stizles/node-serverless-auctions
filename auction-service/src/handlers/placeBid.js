@@ -9,7 +9,7 @@ const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 const placeBid = async (event, context) => {
   const { amount }  = event.body;
-  const { id } = event.pathParameters;
+  const { auctionId: id } = event.pathParameters;
   const { email }  = event.requestContext.authorizer;
 
   const auction = await getAuctionById(id);

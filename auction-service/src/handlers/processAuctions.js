@@ -1,5 +1,5 @@
 const createError = require('http-errors');
-const { getEndedAuctions, closeAuction } = require('../lib/auctionsLib');
+const { getEndedAuctions, closeAuction } = require('../lib/processAuctionsLib');
 
 const processAuctions = async (event, context) => {
   try {

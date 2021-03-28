@@ -1,12 +1,23 @@
-AuctionsTable:
+AuctionsBucket:
   Type: AWS::S3::Bucket
   Properties:
-    BucketName: AuctionsTable
+    BucketName: ${self:custom.AuctionsBucket.name}
+    LifecycleConfiguration:
+      Rules:
+        - Id: ExpirePictures # Optional expiry policy for all pictures uploaded to this Bucket
+          Status: Enabled
+          ExpirationInDays: 1
 
-    BillingMode: PAY_PER_REQUEST
-    AttributeDefinitions:
-      - AttributeName: id
-        AttributeType: S
-    KeySchema:
-      - AttributeName: id
-        KeyType: HASH
+AuctionsBucketPolicy:
+  Type: AWS::S3::BucketPolicy
+  Properties:
+    Bucket:
+      Ref: AuctionsBucket
+    PolicyDocument:
+      Statement:
+        - Sid: PublicRead
+          Effect: Allow
+          Principal: '*'
+          Action:
+            - s3:GetObject
+          Resource: arn:aws:s3:::${self:custom.AuctionsBucket.name}/*

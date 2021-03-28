@@ -2,5 +2,14 @@ AuctionsTableIAM:
   Effect: "Allow"
   Action:
     - dynamodb:PutItem
+    - dynamodb:Scan
+    - dynamodb:GetItem
+    - dynamodb:UpdateItem
+    - dynamodb:Query
   Resource:
-    - arn:aws:dynamodb:eu-west-2:676179010844:table/AuctionsTable
+  - ${self:custom.AuctionsTable.arn} #arn:aws:dynamodb:eu-west-2:676179010844:table/AuctionsTable
+  - Fn::Join:
+      - '/'
+      - -  'arn:aws:dynamodb:eu-west-2:676179010844:table/AuctionsTable'
+        - 'index'
+        - 'statusAndEndingAt'
